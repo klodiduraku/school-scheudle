@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Schedule</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            cursor: pointer;
+        }
+        .sort-icon::after {
+            content: '\25B2\25BC';
+            font-size: 0.8em;
+            margin-left: 5px;
+        }
+        #searchInput {
+            margin-bottom: 10px;
+            padding: 5px;
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <h1>School Schedule</h1>
+    
+    <input type="text" id="searchInput" placeholder="Search by teacher name...">
+    
+    <div id="loadingMessage">Loading teacher data...</div>
+    
+    <div id="errorMessage"></div>
+    
+    <table id="teacherTable">
+        <thead>
+            <tr>
+                <th>name <span class="sort-icon"></span></th>
+                <th>surname <span class="sort-icon"></span></th>
+                <th>subject <span class="sort-icon"></span></th>
+                <th>time <span class="sort-icon"></span></th>
+                <th>class <span class="sort-icon"></span></th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    
+    <div id="noResultsMessage">No results found. Please try a different search.</div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tableBody = document.querySelector('#teacherTable tbody');
+            const loadingMessage = document.getElementById('loadingMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            const noResultsMessage = document.getElementById('noResultsMessage');
+            const searchInput = document.getElementById('searchInput');
+            let allTeachers = [];
+
+            fetch('/api/teachers')
+                .then(response => response.json())
+                .then(teachers => {
+                    loadingMessage.style.display = 'none';
+                    allTeachers = teachers;
+                    displayTeachers(teachers);
+                })
+                .catch(error => {
+                    loadingMessage.style.display = 'none';
+                    errorMessage.textContent = 'Error loading teacher data. Please try again later.';
+                    console.error('Error:', error);
+                });
+
+            function displayTeachers(teachers) {
+                tableBody.innerHTML = '';
+                if (teachers.length === 0) {
+                    noResultsMessage.style.display = 'block';
+                    return;
+                }
+                noResultsMessage.style.display = 'none';
+                teachers.forEach(teacher => {
+                    const row = tableBody.insertRow();
+                    row.insertCell().textContent = teacher.name || '';
+                    row.insertCell().textContent = teacher.surname || '';
+                    row.insertCell().textContent = teacher.subject || '';
+                    row.insertCell().textContent = teacher.time || '';
+                    row.insertCell().textContent = teacher.class || '';
+                });
+            }
+
+            searchInput.addEventListener('input', () => {
+                const searchTerm = searchInput.value.toLowerCase();
+                const filteredTeachers = allTeachers.filter(teacher => 
+                    (teacher.name && teacher.name.toLowerCase().includes(searchTerm)) || 
+                    (teacher.surname && teacher.surname.toLowerCase().includes(searchTerm))
+                );
+                displayTeachers(filteredTeachers);
+            });
+
+            // Add sorting functionality here if needed
+        });
+    </script>
+</body>
+</html>
